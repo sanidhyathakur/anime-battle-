@@ -114,15 +114,17 @@ export function Lobby() {
   
   // Get unique universes
   const allUniverses = Array.from(new Set(characters.map(c => c.universe)));
-  const [selectedUniverses, setSelectedUniverses] = useState<string[]>(['Dragon Ball']);
+  const [selectedUniverses, setSelectedUniverses] = useState<string[]>(
+    allUniverses.filter(u => u.startsWith('Dragon Ball'))
+  );
 
   const [maxPasses, setMaxPasses] = useState(2);
   const [auctionBudget, setAuctionBudget] = useState(150);
   const [teamSize, setTeamSize] = useState(5);
 
   const toggleUniverse = (u: string) => {
-    // Only 'Dragon Ball' is unlocked and is always selected
-    if (u === 'Dragon Ball') return;
+    // Only 'Dragon Ball' sub-universes are unlocked and always selected
+    if (u.startsWith('Dragon Ball')) return;
     setSelectedUniverses(prev => 
       prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]
     );
@@ -309,7 +311,7 @@ export function Lobby() {
             <div className="grid grid-cols-2 gap-2">
               {allUniverses.map(u => {
                 const isSelected = selectedUniverses.includes(u);
-                const isLocked = u !== 'Dragon Ball';
+                const isLocked = !u.startsWith('Dragon Ball');
                 return (
                   <div 
                     key={u}

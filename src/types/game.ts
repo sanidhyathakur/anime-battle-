@@ -3,7 +3,9 @@ export type Rarity = 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Mythic';
 export const ALL_ROLES: Role[] = [
   'Captain', 'Vice Captain', 'Tank', 'Healer', 'Assassin', 
   'Mage', 'Support', 'Berserker', 'Strategist', 'Speedster', 
-  'Sniper', 'Leader', 'Guardian', 'Fighter'
+  'Sniper', 'Leader', 'Guardian', 'Fighter',
+  'Destroyer', 'Angel', 'Inventor', 'Scout', 'Conqueror', 
+  'Monster', 'Carry', 'Bruiser', 'Warrior', 'Fusion'
 ];
 
 export type Role = 
@@ -20,7 +22,17 @@ export type Role =
   | 'Sniper' 
   | 'Leader' 
   | 'Guardian'
-  | 'Fighter';
+  | 'Fighter'
+  | 'Destroyer'
+  | 'Angel'
+  | 'Inventor'
+  | 'Scout'
+  | 'Conqueror'
+  | 'Monster'
+  | 'Carry'
+  | 'Bruiser'
+  | 'Warrior'
+  | 'Fusion';
 
 export interface Character {
   id: string;

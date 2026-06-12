@@ -46,7 +46,7 @@ const initialSettings: GameSettings = {
   budget: 150,
   playerCount: 2,
   cpuCount: 1,
-  universeRestrictions: ['Dragon Ball'],
+  universeRestrictions: ['Dragon Ball Super', 'Dragon Ball Z'],
   maxPasses: 3,
   roomCode: undefined,
   teamSize: 5,
@@ -77,7 +77,7 @@ export const useGameStore = create<GameState>()(
         if (activeSettings.universeRestrictions.length > 0) {
           pool = pool.filter(c => activeSettings.universeRestrictions.includes(c.universe));
         } else {
-          pool = pool.filter(c => c.universe === 'Dragon Ball');
+          pool = pool.filter(c => c.universe.startsWith('Dragon Ball'));
         }
 
         set({
@@ -106,7 +106,7 @@ export const useGameStore = create<GameState>()(
         settings: initialSettings,
         players: [],
         currentPlayerIndex: 0,
-        availableCharacters: characters.filter(c => c.universe === 'Dragon Ball'),
+        availableCharacters: characters.filter(c => c.universe.startsWith('Dragon Ball')),
         draftPhase: 'Setup',
         currentRound: 1,
         draftDirection: 1,
