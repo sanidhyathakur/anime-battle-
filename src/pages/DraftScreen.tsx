@@ -6,9 +6,11 @@ import { CharacterCard } from '../components/CharacterCard';
 import { NeonButton } from '../components/NeonButton';
 import { ALL_ROLES, Role } from '../types/game';
 import { cn } from '../components/NeonButton';
+import { startRoomSync, stopRoomSync, getLocalPlayerId } from '../store/syncService';
 
 export function DraftScreen() {
   const navigate = useNavigate();
+  const localPlayerId = getLocalPlayerId();
   const { 
     players, 
     currentPlayerIndex, 
@@ -37,27 +39,10 @@ export function DraftScreen() {
     const { roomCode } = useGameStore.getState().settings;
     if (!roomCode) return;
     
-    // Subscribe to state changes and push them via BroadcastChannel
-    const unsubscribe = useGameStore.subscribe((state) => {
-      // Only broadcast if it's our turn effectively, or we are making an action
-      // To prevent loop, we only broadcast when local user modifies state
-      // This is simple: just broadcast every state change
-      const bc = new BroadcastChannel(`adb-${roomCode}`);
-      bc.postMessage({ type: 'SYNC_STATE', state });
-      bc.close();
-    });
-    
-    // Listen to incoming state changes
-    const bc = new BroadcastChannel(`adb-${roomCode}`);
-    bc.onmessage = (event) => {
-      if (event.data.type === 'SYNC_STATE') {
-        useGameStore.setState(event.data.state);
-      }
-    };
+    startRoomSync(roomCode);
     
     return () => {
-      unsubscribe();
-      bc.close();
+      stopRoomSync();
     };
   }, []);
 
@@ -147,12 +132,18 @@ export function DraftScreen() {
                 className="text-center"
               >
                 {currentPlayer.type === 'Human' ? (
-                  <>
-                    <h2 className="text-2xl font-mono text-gray-400 uppercase tracking-widest mb-12">System Output Pending...</h2>
-                    <NeonButton size="xl" onClick={pullRandomCharacter} className="w-64 h-24 text-2xl animate-pulse ring-4 ring-cyan-500/30">
-                      INITIATE PULL
-                    </NeonButton>
-                  </>
+                  localPlayerId === 'all' || currentPlayer.id === localPlayerId ? (
+                    <>
+                      <h2 className="text-2xl font-mono text-gray-400 uppercase tracking-widest mb-12">System Output Pending...</h2>
+                      <NeonButton size="xl" onClick={pullRandomCharacter} className="w-64 h-24 text-2xl animate-pulse ring-4 ring-cyan-500/30">
+                        INITIATE PULL
+                      </NeonButton>
+                    </>
+                  ) : (
+                    <div className="text-2xl font-mono text-cyan-400 uppercase tracking-widest animate-pulse">
+                       Waiting for {currentPlayer.name} to pull...
+                    </div>
+                  )
                 ) : (
                   <div className="text-2xl font-mono text-fuchsia-400 uppercase tracking-widest animate-pulse">
                      CPU Computing Pull Variables...
@@ -180,7 +171,7 @@ export function DraftScreen() {
                     Proceed with tactical integration or reject.
                   </p>
 
-                  {currentPlayer.type === 'Human' ? (
+                  {currentPlayer.type === 'Human' && (localPlayerId === 'all' || currentPlayer.id === localPlayerId) ? (
                     <div className="space-y-6 flex-1">
                       <div>
                         <label className="block text-xs font-mono text-cyan-400 uppercase mb-2">Assign Role Directive</label>
@@ -205,8 +196,8 @@ export function DraftScreen() {
                           disabled={!selectedRole}
                           onClick={() => {
                              if(selectedRole) {
-                               assignRandomCharacter(currentPlayer.id, selectedRole);
-                               setSelectedRole('');
+                                assignRandomCharacter(currentPlayer.id, selectedRole);
+                                setSelectedRole('');
                              }
                           }}
                         >
@@ -225,6 +216,10 @@ export function DraftScreen() {
                           REJECT / PASS ({currentPlayer.passesRemaining})
                         </NeonButton>
                       </div>
+                    </div>
+                  ) : currentPlayer.type === 'Human' ? (
+                    <div className="flex-1 flex flex-col justify-center text-center py-10 space-y-4">
+                       <p className="text-xl font-mono text-cyan-400 uppercase animate-pulse">Waiting for {currentPlayer.name} to lock in...</p>
                     </div>
                   ) : (
                     <div className="flex-1 flex flex-col justify-center text-center py-10 space-y-4">

@@ -7,6 +7,7 @@ import { cn } from '../components/NeonButton';
 import { GameMode, Player } from '../types/game';
 import { characters } from '../data/characters';
 import { Wifi, Copy, Lock } from 'lucide-react';
+import { startRoomSync, stopRoomSync, broadcastStartGame } from '../store/syncService';
 
 // Generates a random 4-character string
 const generateRoomCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -29,21 +30,26 @@ export function Lobby() {
     }
   }, [baseMode, roomCode]);
 
-  // Sync effect using BroadcastChannel for browser-based realtime syncing
   useEffect(() => {
-    if (!roomCode) return;
-    const bc = new BroadcastChannel(`adb-${roomCode}`);
-    
-    bc.onmessage = (event) => {
-      if (event.data.type === 'START_GAME' && baseMode === 'join') {
-        useGameStore.setState(event.data.state);
-        // Only navigate if we are the joiner and receive a start signal
-        const mode = event.data.state.settings.mode;
+    const localId = baseMode === 'join' ? '2' : (baseMode === 'hotseat' ? 'all' : '1');
+    sessionStorage.setItem('localPlayerId', localId);
+  }, [baseMode]);
+
+  // Sync effect using ntfy for online syncing
+  useEffect(() => {
+    if (!roomCode || (baseMode !== 'host' && baseMode !== 'join')) return;
+
+    startRoomSync(roomCode, (state) => {
+      if (baseMode === 'join') {
+        const mode = state.settings.mode;
         if (mode === 'Auction') navigate('/auction');
         else navigate('/draft');
       }
+    });
+
+    return () => {
+      stopRoomSync();
     };
-    return () => bc.close();
   }, [roomCode, baseMode, navigate]);
   
   const [gameMode, setGameMode] = useState<GameMode>('Draft');
@@ -84,9 +90,7 @@ export function Lobby() {
     });
 
     if (roomCode && (baseMode === 'host' || baseMode === 'join')) {
-      const bc = new BroadcastChannel(`adb-${roomCode}`);
-      bc.postMessage({ type: 'START_GAME', state: useGameStore.getState() });
-      bc.close();
+      broadcastStartGame(roomCode, useGameStore.getState());
     }
 
     if (gameMode === 'Auction') navigate('/auction');

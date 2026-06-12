@@ -5,6 +5,7 @@ import { useGameStore } from '../store/gameStore';
 import { NeonButton } from '../components/NeonButton';
 import { Player } from '../types/game';
 import { cn } from '../components/NeonButton';
+import { startRoomSync, stopRoomSync } from '../store/syncService';
 
 export function BattleResult() {
   const navigate = useNavigate();
@@ -18,13 +19,11 @@ export function BattleResult() {
     const { roomCode } = useGameStore.getState().settings;
     if (!roomCode) return;
     
-    const bc = new BroadcastChannel(`adb-${roomCode}`);
-    bc.onmessage = (event) => {
-      if (event.data.type === 'SYNC_STATE') {
-        useGameStore.setState(event.data.state);
-      }
+    startRoomSync(roomCode);
+    
+    return () => {
+      stopRoomSync();
     };
-    return () => bc.close();
   }, []);
 
   useEffect(() => {

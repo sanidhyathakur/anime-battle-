@@ -5,9 +5,11 @@ import { useGameStore } from '../store/gameStore';
 import { CharacterCard } from '../components/CharacterCard';
 import { NeonButton } from '../components/NeonButton';
 import { cn } from '../components/NeonButton';
+import { startRoomSync, stopRoomSync, getLocalPlayerId } from '../store/syncService';
 
 export function AuctionScreen() {
   const navigate = useNavigate();
+  const localPlayerId = getLocalPlayerId();
   const { 
     settings,
     players, 
@@ -44,22 +46,10 @@ export function AuctionScreen() {
     const { roomCode } = useGameStore.getState().settings;
     if (!roomCode) return;
     
-    const unsubscribe = useGameStore.subscribe((state) => {
-      const bc = new BroadcastChannel(`adb-${roomCode}`);
-      bc.postMessage({ type: 'SYNC_STATE', state });
-      bc.close();
-    });
-    
-    const bc = new BroadcastChannel(`adb-${roomCode}`);
-    bc.onmessage = (event) => {
-      if (event.data.type === 'SYNC_STATE') {
-        useGameStore.setState(event.data.state);
-      }
-    };
+    startRoomSync(roomCode);
     
     return () => {
-      unsubscribe();
-      bc.close();
+      stopRoomSync();
     };
   }, []);
 
@@ -267,9 +257,8 @@ export function AuctionScreen() {
                     00:{timer.toString().padStart(2, '0')}
                   </div>
 
-                  {/* Actions for human players */}
                   <div className="flex justify-center gap-4 flex-wrap">
-                    {players.filter(p => p.type === 'Human').map(human => {
+                    {players.filter(p => p.type === 'Human').filter(p => localPlayerId === 'all' || p.id === localPlayerId).map(human => {
                        const isTeamFull = human.team.length >= settings.teamSize;
                        const canBid = human.budget >= auctionCurrentBid + 5 && !isTeamFull;
                        const customBidVal = parseInt(customBids[human.id] || "0") || 0;

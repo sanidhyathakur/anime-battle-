@@ -5,11 +5,14 @@ import { useGameStore } from '../store/gameStore';
 import { NeonButton } from '../components/NeonButton';
 import { ALL_ROLES, Role } from '../types/game';
 import { cn } from '../components/NeonButton';
+import { startRoomSync, stopRoomSync, getLocalPlayerId } from '../store/syncService';
 
 export function TeamBuilder() {
   const navigate = useNavigate();
   const { players, assignRole, setDraftPhase } = useGameStore();
-  const [viewingPlayer, setViewingPlayer] = useState(0);
+  const localPlayerId = getLocalPlayerId();
+  const initialPlayerIndex = localPlayerId === '2' ? 1 : 0;
+  const [viewingPlayer, setViewingPlayer] = useState(initialPlayerIndex);
 
   const player = players[viewingPlayer];
 
@@ -18,24 +21,22 @@ export function TeamBuilder() {
     const { roomCode } = useGameStore.getState().settings;
     if (!roomCode) return;
     
-    const unsubscribe = useGameStore.subscribe((state) => {
-      const bc = new BroadcastChannel(`adb-${roomCode}`);
-      bc.postMessage({ type: 'SYNC_STATE', state });
-      bc.close();
-    });
-    
-    const bc = new BroadcastChannel(`adb-${roomCode}`);
-    bc.onmessage = (event) => {
-      if (event.data.type === 'SYNC_STATE') {
-        useGameStore.setState(event.data.state);
-      }
-    };
+    startRoomSync(roomCode);
     
     return () => {
-      unsubscribe();
-      bc.close();
+      stopRoomSync();
     };
   }, []);
+
+  useEffect(() => {
+    // If draftPhase becomes 'Battle' via sync, navigate
+    const unsub = useGameStore.subscribe((state) => {
+      if (state.draftPhase === 'Battle') {
+        navigate('/battle');
+      }
+    });
+    return () => unsub();
+  }, [navigate]);
 
   // CPU Role Auto-Assignment
   useEffect(() => {
@@ -71,12 +72,51 @@ export function TeamBuilder() {
     }
   }, [players, assignRole]);
 
+  const myTeam = players.find(p => p.id === localPlayerId)?.team || [];
+  const localPlayerDone = myTeam.every(t => t.assignedRole);
+  const allPlayersDone = players.every(p => p.team.every(t => t.assignedRole));
+
+  const getButtonText = () => {
+    if (localPlayerId === 'all') {
+      return viewingPlayer < players.length - 1 ? 'Next Roster' : 'Commence Battle';
+    }
+    if (!localPlayerDone) {
+      return 'Lock Roster / Ready';
+    }
+    if (!allPlayersDone) {
+      return 'Waiting for Opponent...';
+    }
+    return 'Commence Battle';
+  };
+
+  const isButtonDisabled = () => {
+    if (localPlayerId === 'all') return false;
+    if (!localPlayerDone) {
+      return !myTeam.every(t => t.assignedRole);
+    }
+    return !allPlayersDone;
+  };
+
   const handleFinish = () => {
-    if (viewingPlayer < players.length - 1) {
-      setViewingPlayer(v => v + 1);
+    if (localPlayerId === 'all') {
+      if (viewingPlayer < players.length - 1) {
+        setViewingPlayer(v => v + 1);
+      } else {
+        const allDone = players.every(p => p.team.every(t => t.assignedRole));
+        if (allDone) {
+          setDraftPhase('Battle');
+          navigate('/battle');
+        } else {
+          alert("Please assign roles to all operatives!");
+        }
+      }
     } else {
-      setDraftPhase('Battle');
-      navigate('/battle');
+      if (allPlayersDone) {
+        setDraftPhase('Battle');
+        navigate('/battle');
+      } else {
+        alert("Roster locked. Waiting for opponent to finish...");
+      }
     }
   };
 
@@ -122,8 +162,14 @@ export function TeamBuilder() {
           ))}
 
           <div className="pt-8">
-            <NeonButton variant="purple" size="lg" className="w-full" onClick={handleFinish}>
-              {viewingPlayer < players.length - 1 ? 'Next Roster' : 'Commence Battle'}
+            <NeonButton 
+              variant="purple" 
+              size="lg" 
+              className="w-full" 
+              onClick={handleFinish}
+              disabled={isButtonDisabled()}
+            >
+              {getButtonText()}
             </NeonButton>
           </div>
         </div>
@@ -167,11 +213,12 @@ export function TeamBuilder() {
                         const isTakenByOther = player.team.some(t => t.assignedRole === role && t.character.id !== drafted.character.id);
                         const isPreferred = drafted.character.preferredRoles.includes(role);
                         
+                        const isMyRoster = localPlayerId === 'all' || player.id === localPlayerId;
                         return (
                           <button
                             key={role}
-                            onClick={() => !isTakenByOther && assignRole(player.id, drafted.character.id, role)}
-                            disabled={isTakenByOther}
+                            onClick={() => !isTakenByOther && isMyRoster && assignRole(player.id, drafted.character.id, role)}
+                            disabled={isTakenByOther || !isMyRoster}
                             className={cn(
                               "px-3 py-1.5 rounded-md text-xs font-mono transition-all",
                               isSelected 
