@@ -29,8 +29,17 @@ export function Lobby() {
   const [p2Name, setP2Name] = useState(baseMode === 'cpu' ? 'CPU Alpha' : (baseMode === 'join' ? 'Player 2 (You)' : 'Player 2'));
   const [roomCode, setRoomCode] = useState<string>(urlCode || '');
 
+  const [p1Connected, setP1Connected] = useState(baseMode === 'host');
+  const [p2Connected, setP2Connected] = useState(baseMode === 'cpu');
+
   const lastP1Name = useRef(p1Name);
   const lastP2Name = useRef(p2Name);
+
+  const p1NameRef = useRef(p1Name);
+  p1NameRef.current = p1Name;
+
+  const p2NameRef = useRef(p2Name);
+  p2NameRef.current = p2Name;
 
   useEffect(() => {
     if (baseMode === 'host' && !roomCode) {
@@ -73,6 +82,66 @@ export function Lobby() {
     }
   };
 
+  // Debounced real-time name broadcast
+  useEffect(() => {
+    if (!roomCode || baseMode !== 'host') return;
+    if (p1Name === 'Player 1 (Host)' || p1Name === 'Player 1') return;
+    const delayDebounce = setTimeout(() => {
+      broadcastNameUpdate('1', p1Name);
+      lastP1Name.current = p1Name;
+    }, 500);
+    return () => clearTimeout(delayDebounce);
+  }, [p1Name, roomCode, baseMode]);
+
+  useEffect(() => {
+    if (!roomCode || baseMode !== 'join') return;
+    if (p2Name === 'Player 2 (You)' || p2Name === 'Player 2') return;
+    const delayDebounce = setTimeout(() => {
+      broadcastNameUpdate('2', p2Name);
+      lastP2Name.current = p2Name;
+    }, 500);
+    return () => clearTimeout(delayDebounce);
+  }, [p2Name, roomCode, baseMode]);
+
+  // Handshake retry loop for player 2 (joiner)
+  useEffect(() => {
+    if (baseMode !== 'join' || !roomCode || p1Connected) return;
+
+    const sendJoin = () => {
+      fetch(`https://ntfy.sh/adb-room-${roomCode}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          type: 'PLAYER_JOINED',
+          name: p2NameRef.current,
+          senderId: '2'
+        })
+      }).catch(err => console.error('Error broadcasting join:', err));
+    };
+
+    sendJoin();
+    const interval = setInterval(sendJoin, 4000);
+    return () => clearInterval(interval);
+  }, [roomCode, baseMode, p1Connected]);
+
+  // Host Ping broadcast on mount
+  useEffect(() => {
+    if (baseMode === 'host' && roomCode) {
+      const timer = setTimeout(() => {
+        fetch(`https://ntfy.sh/adb-room-${roomCode}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({
+            type: 'HOST_PING',
+            name: p1NameRef.current,
+            senderId: '1'
+          })
+        }).catch(err => console.error('Error broadcasting host ping:', err));
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [roomCode, baseMode]);
+
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.currentTarget.blur();
@@ -98,6 +167,26 @@ export function Lobby() {
           if (payload.type === 'UPDATE_NAME') {
             if (payload.playerId === '1') setP1Name(payload.name);
             if (payload.playerId === '2') setP2Name(payload.name);
+          } else if (payload.type === 'PLAYER_JOINED') {
+            setP2Name(payload.name);
+            setP2Connected(true);
+            
+            // Reply with host name and ack
+            fetch(`https://ntfy.sh/adb-room-${roomCode}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain' },
+              body: JSON.stringify({
+                type: 'HOST_ACK',
+                name: p1NameRef.current,
+                senderId: '1'
+              })
+            }).catch(err => console.error('Error sending host ack:', err));
+          } else if (payload.type === 'HOST_ACK') {
+            setP1Name(payload.name);
+            setP1Connected(true);
+            setP2Connected(true);
+          } else if (payload.type === 'HOST_PING') {
+            setP1Connected(false);
           } else if (payload.type === 'START_GAME' || payload.type === 'SYNC_STATE') {
             const state = decompressState(payload.state);
             updateStoreFromNetwork(state);
@@ -200,8 +289,14 @@ export function Lobby() {
                 </span>
               )}
             </h2>
-            <p className="font-mono text-gray-400 text-sm flex justify-between items-center">
+            <p className="font-mono text-gray-400 text-sm flex justify-between items-center gap-4">
               <span>{baseMode === 'cpu' ? 'SINGLE PLAYER :: VS CPU' : (baseMode === 'join' ? 'MULTIPLAYER :: JOINING ROOM' : (baseMode === 'host' ? 'MULTIPLAYER :: HOSTING' : 'LOCAL MULTIPLAYER :: HOTSEAT'))}</span>
+              <button 
+                onClick={() => navigate('/')}
+                className="text-xs font-bold uppercase tracking-wider text-red-400 hover:text-red-300 px-3 py-1.5 bg-red-950/20 border border-red-500/20 hover:border-red-500/50 rounded-lg transition-all duration-300 cursor-pointer shrink-0"
+              >
+                Exit Lobby
+              </button>
             </p>
             {roomCode && (baseMode === 'host' || baseMode === 'join') && (
               <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-xl flex items-center justify-between">
@@ -223,7 +318,15 @@ export function Lobby() {
           <div className="space-y-4">
             <div className="bg-black/50 p-4 lg:p-6 rounded-xl border border-white/10 relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500 shadow-[0_0_10px_#00f0ff]" />
-              <label className="block text-xs font-mono text-cyan-500 mb-2">SLOT 01 :: {baseMode === 'join' ? 'PLAYER 1 (HOST)' : 'PLAYER 1 (YOU)'}</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-mono text-cyan-500">SLOT 01 :: {baseMode === 'join' ? 'PLAYER 1 (HOST)' : 'PLAYER 1 (YOU)'}</label>
+                {baseMode === 'join' && (
+                  <span className={`text-[10px] font-mono flex items-center gap-1 ${p1Connected ? 'text-green-400' : 'text-yellow-500 animate-pulse'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${p1Connected ? 'bg-green-400' : 'bg-yellow-500'}`} />
+                    {p1Connected ? 'Connected' : 'Connecting...'}
+                  </span>
+                )}
+              </div>
               <input 
                 type="text" 
                 value={p1Name}
@@ -237,9 +340,17 @@ export function Lobby() {
 
             <div className="bg-black/50 p-4 lg:p-6 rounded-xl border border-white/10 relative overflow-hidden">
                <div className="absolute left-0 top-0 bottom-0 w-1 bg-fuchsia-500 shadow-[0_0_10px_#ae00ff]" />
-              <label className="block text-xs font-mono text-fuchsia-500 mb-2">
-                SLOT 02 :: {baseMode === 'cpu' ? 'CPU' : (baseMode === 'join' ? 'PLAYER 2 (YOU)' : 'PLAYER 2 (GUEST)')}
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-mono text-fuchsia-500">
+                  SLOT 02 :: {baseMode === 'cpu' ? 'CPU' : (baseMode === 'join' ? 'PLAYER 2 (YOU)' : 'PLAYER 2 (GUEST)')}
+                </label>
+                {(baseMode === 'host' || baseMode === 'join') && (
+                  <span className={`text-[10px] font-mono flex items-center gap-1 ${p2Connected ? 'text-green-400' : 'text-yellow-500 animate-pulse'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${p2Connected ? 'bg-green-400' : 'bg-yellow-500'}`} />
+                    {p2Connected ? 'Connected' : 'Waiting...'}
+                  </span>
+                )}
+              </div>
               <input 
                 type="text" 
                 value={p2Name}
