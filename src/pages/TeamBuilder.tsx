@@ -6,6 +6,7 @@ import { NeonButton } from '../components/NeonButton';
 import { ALL_ROLES, Role } from '../types/game';
 import { cn } from '../components/NeonButton';
 import { startRoomSync, stopRoomSync, getLocalPlayerId } from '../store/syncService';
+import { LogOut } from 'lucide-react';
 
 export function TeamBuilder() {
   const navigate = useNavigate();
@@ -130,13 +131,26 @@ export function TeamBuilder() {
     <div className="min-h-screen bg-[#050508] relative p-6 font-sans flex flex-col">
       <div className="absolute inset-0 pointer-events-none opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 100% 0%, #ae00ff, #050508 50%)' }} />
 
-      <header className="text-center mb-8 relative z-10">
-        <h1 className="text-4xl md:text-5xl font-display font-black uppercase text-white tracking-widest neon-text-purple">
-          Tactical Planning
-        </h1>
-        <p className="text-gray-400 font-mono mt-2 tracking-widest uppercase">
-          Assign Roles & Optimize Synergy
-        </p>
+       <header className="flex justify-between items-center mb-8 relative z-10 border-b border-white/10 pb-4">
+        <div className="text-left">
+          <h1 className="text-4xl md:text-5xl font-display font-black uppercase text-white tracking-widest neon-text-purple">
+            Tactical Planning
+          </h1>
+          <p className="text-gray-400 font-mono mt-2 tracking-widest uppercase text-xs">
+            Assign Roles & Optimize Synergy
+          </p>
+        </div>
+        <button 
+          onClick={() => {
+            if (confirm("Are you sure you want to quit the match?")) {
+              navigate('/');
+            }
+          }}
+          className="p-2.5 bg-red-950/20 border border-red-500/20 hover:border-red-500/50 hover:bg-red-500/10 text-red-400 rounded-lg transition-all duration-300 cursor-pointer flex items-center justify-center"
+          title="Exit Match"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
       </header>
       
       <div className="flex-1 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">

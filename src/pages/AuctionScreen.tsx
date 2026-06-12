@@ -6,6 +6,7 @@ import { CharacterCard } from '../components/CharacterCard';
 import { NeonButton } from '../components/NeonButton';
 import { cn } from '../components/NeonButton';
 import { startRoomSync, stopRoomSync, getLocalPlayerId } from '../store/syncService';
+import { LogOut } from 'lucide-react';
 
 export function AuctionScreen() {
   const navigate = useNavigate();
@@ -163,11 +164,24 @@ export function AuctionScreen() {
             Teams
           </button>
         </div>
-        <div className="text-right">
-          <span className="text-xs font-mono text-gray-400 uppercase tracking-widest block">Available Pool</span>
-          <span className="font-display font-bold text-xl text-white">
-            {availableCharacters.length} <span className="text-pink-500">Remaining</span>
-          </span>
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <span className="text-xs font-mono text-gray-400 uppercase tracking-widest block">Available Pool</span>
+            <span className="font-display font-bold text-xl text-white">
+              {availableCharacters.length} <span className="text-pink-500">Remaining</span>
+            </span>
+          </div>
+          <button 
+            onClick={() => {
+              if (confirm("Are you sure you want to quit the match?")) {
+                navigate('/');
+              }
+            }}
+            className="p-2.5 bg-red-950/20 border border-red-500/20 hover:border-red-500/50 hover:bg-red-500/10 text-red-400 rounded-lg transition-all duration-300 cursor-pointer flex items-center justify-center"
+            title="Exit Match"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 

@@ -6,6 +6,7 @@ import { NeonButton } from '../components/NeonButton';
 import { Player } from '../types/game';
 import { cn } from '../components/NeonButton';
 import { startRoomSync, stopRoomSync } from '../store/syncService';
+import { LogOut } from 'lucide-react';
 
 export function BattleResult() {
   const navigate = useNavigate();
@@ -112,6 +113,17 @@ export function BattleResult() {
   return (
     <div className="min-h-screen bg-[#050508] p-6 flex flex-col relative">
        <div className="absolute inset-0 pointer-events-none opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #ae00ff, #050508 60%)' }} />
+       <button 
+         onClick={() => {
+           if (confirm("Are you sure you want to quit?")) {
+             handleReturn();
+           }
+         }}
+         className="absolute top-6 right-6 z-50 p-2.5 bg-red-950/20 border border-red-500/20 hover:border-red-500/50 hover:bg-red-500/10 text-red-400 rounded-lg transition-all duration-300 cursor-pointer flex items-center justify-center"
+         title="Exit Match"
+       >
+         <LogOut className="w-4 h-4" />
+       </button>
 
       <main className="flex-1 w-full max-w-5xl mx-auto flex flex-col justify-center items-center relative z-10">
         

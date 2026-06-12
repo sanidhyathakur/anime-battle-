@@ -7,6 +7,7 @@ import { NeonButton } from '../components/NeonButton';
 import { ALL_ROLES, Role } from '../types/game';
 import { cn } from '../components/NeonButton';
 import { startRoomSync, stopRoomSync, getLocalPlayerId } from '../store/syncService';
+import { LogOut } from 'lucide-react';
 
 export function DraftScreen() {
   const navigate = useNavigate();
@@ -99,6 +100,17 @@ export function DraftScreen() {
                {currentPlayer.name}
              </span>
           </div>
+          <button 
+            onClick={() => {
+              if (confirm("Are you sure you want to quit the match?")) {
+                navigate('/');
+              }
+            }}
+            className="p-2.5 bg-red-950/20 border border-red-500/20 hover:border-red-500/50 hover:bg-red-500/10 text-red-400 rounded-lg transition-all duration-300 cursor-pointer flex items-center justify-center"
+            title="Exit Match"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
