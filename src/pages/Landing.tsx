@@ -297,16 +297,16 @@ export function Landing() {
               className="text-center z-10 max-w-lg space-y-8 px-6"
             >
               {/* Logo / Title */}
-              <div className="space-y-3">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-[10px] font-mono tracking-widest text-cyan-400 uppercase">
-                  System Initialization :: Ready
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-full text-[10px] font-mono tracking-widest text-fuchsia-400 uppercase">
+                  Challenger Approaching
                 </div>
                 <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter italic text-white leading-none">
-                  ANIME DRAFT<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-500 drop-shadow-[0_0_20px_rgba(6,182,212,0.3)]">BATTLE</span>
+                  ARE YOU READY<br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-500 drop-shadow-[0_0_20px_rgba(6,182,212,0.3)]">TO BATTLE?</span>
                 </h1>
-                <p className="text-xs font-mono text-gray-500 uppercase tracking-wider">
-                  Tactical card drafting & synergy simulation
+                <p className="text-sm md:text-base font-bold text-gray-300 uppercase tracking-widest animate-pulse">
+                  SHOW THEM WHAT YOU GOT
                 </p>
               </div>
 
@@ -315,10 +315,10 @@ export function Landing() {
                 onClick={handleStartGame}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-full max-w-sm py-4 bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all duration-300 relative group cursor-pointer"
+                className="w-full max-w-xs py-4 bg-gradient-to-r from-cyan-500 via-violet-600 to-fuchsia-600 hover:from-cyan-400 hover:to-fuchsia-500 text-white rounded-2xl font-black text-base uppercase tracking-[0.25em] shadow-[0_0_30px_rgba(168,85,247,0.4)] transition-all duration-300 relative group cursor-pointer"
               >
                 <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
-                INITIATE INTERACTION
+                START
               </motion.button>
 
               <div className="text-[9px] font-mono text-gray-600 uppercase tracking-widest flex items-center justify-center gap-2">
