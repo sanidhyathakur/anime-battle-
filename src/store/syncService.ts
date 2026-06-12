@@ -149,6 +149,13 @@ export const getLocalPlayerId = () => {
 // Global subscription and event source tracking
 let activeEventSource: EventSource | null = null;
 let activeUnsubscribe: (() => void) | null = null;
+let isSyncingFromNetwork = false;
+
+export const updateStoreFromNetwork = (state: any) => {
+  isSyncingFromNetwork = true;
+  useGameStore.setState(state);
+  isSyncingFromNetwork = false;
+};
 
 export const startRoomSync = (roomCode: string, onStartGame?: (state: any) => void) => {
   // Clean up any existing sync
@@ -158,7 +165,7 @@ export const startRoomSync = (roomCode: string, onStartGame?: (state: any) => vo
   console.log(`Starting sync for room ${roomCode}. Local Player ID: ${localPlayerId}`);
 
   // 1. Subscribe to ntfy server-sent events for incoming actions
-  const es = new EventSource(`https://ntfy.sh/adb-room-${roomCode}/sse`);
+  const es = new EventSource(`https://ntfy.sh/adb-room-${roomCode}/sse?since=latest`);
   activeEventSource = es;
 
   es.onmessage = (event) => {
@@ -176,13 +183,13 @@ export const startRoomSync = (roomCode: string, onStartGame?: (state: any) => vo
 
         if (payload.type === 'START_GAME') {
           const state = decompressState(payload.state);
-          useGameStore.setState(state);
+          updateStoreFromNetwork(state);
           if (onStartGame) {
             onStartGame(state);
           }
         } else if (payload.type === 'SYNC_STATE') {
           const state = decompressState(payload.state);
-          useGameStore.setState(state);
+          updateStoreFromNetwork(state);
         }
       }
     } catch (e) {
@@ -196,6 +203,8 @@ export const startRoomSync = (roomCode: string, onStartGame?: (state: any) => vo
 
   // 2. Subscribe to local store changes and broadcast them
   activeUnsubscribe = useGameStore.subscribe((state) => {
+    if (isSyncingFromNetwork) return;
+
     // Only broadcast if we have a room code and it is a multiplayer room
     const currentRoomCode = state.settings.roomCode;
     if (!currentRoomCode) return;

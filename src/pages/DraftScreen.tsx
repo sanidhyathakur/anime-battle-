@@ -23,6 +23,7 @@ export function DraftScreen() {
   } = useGameStore();
 
   const [selectedRole, setSelectedRole] = useState<Role | ''>('');
+  const [showMobileRosters, setShowMobileRosters] = useState(false);
   
   const currentPlayer = players[currentPlayerIndex];
   
@@ -82,8 +83,14 @@ export function DraftScreen() {
       }} />
 
       <header className="h-20 border-b border-white/10 flex items-center justify-between px-8 bg-black/60 backdrop-blur-md relative z-10">
-        <div className="font-display font-black text-2xl tracking-widest uppercase text-white">
-          Gacha Protocol <span className="text-fuchsia-500 ml-2">Round {currentRound}</span>
+        <div className="font-display font-black text-2xl tracking-widest uppercase text-white flex items-center gap-4">
+          <span>Gacha Protocol <span className="text-fuchsia-500 ml-2 hidden sm:inline">Round {currentRound}</span></span>
+          <button 
+            onClick={() => setShowMobileRosters(true)}
+            className="md:hidden px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-xs font-mono font-bold uppercase tracking-wider text-cyan-400 hover:bg-white/20 transition-all active:scale-95"
+          >
+            Teams
+          </button>
         </div>
         <div className="text-right flex items-center gap-6">
           <div className="text-right">
@@ -235,6 +242,58 @@ export function DraftScreen() {
 
         </div>
       </main>
+
+      <AnimatePresence>
+        {showMobileRosters && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          >
+            <div className="glass-panel w-full max-w-md rounded-2xl border-white/20 p-6 flex flex-col max-h-[85vh]">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-display font-bold uppercase text-white tracking-wider">Team Rosters</h2>
+                <button 
+                  onClick={() => setShowMobileRosters(false)}
+                  className="text-gray-400 hover:text-white font-mono text-xs uppercase px-3 py-1 border border-white/10 rounded bg-white/5 hover:bg-white/10"
+                >
+                  Close
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto space-y-6">
+                {players.map(p => (
+                  <div key={p.id} className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 className="font-display font-bold uppercase text-base text-cyan-400">{p.name}</h3>
+                    <div className="flex justify-between text-xs font-mono text-gray-400 mt-1">
+                      <span>Type: {p.type}</span>
+                      <span>Passes: {p.passesRemaining}</span>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {p.team.length === 0 && <span className="text-xs text-white/20 font-mono">No operatives drafted yet...</span>}
+                      {p.team.map((t, i) => (
+                        <div key={i} className="flex items-center gap-3 bg-black/30 p-2 rounded-lg border border-white/5">
+                          <img src={t.character.image} className="w-8 h-8 rounded-full object-cover border border-white/10" alt="" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold truncate text-white">{t.character.name}</p>
+                            <p className="text-[10px] text-gray-400 font-mono truncate">{t.character.universe}</p>
+                          </div>
+                          {t.assignedRole && (
+                            <span className="text-[10px] font-mono text-fuchsia-400 font-bold bg-fuchsia-950/40 border border-fuchsia-500/20 px-2 py-0.5 rounded">
+                              {t.assignedRole}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

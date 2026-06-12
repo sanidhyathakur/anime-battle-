@@ -30,6 +30,7 @@ export function AuctionScreen() {
   const [auctionActive, setAuctionActive] = useState(false);
   const [selectedSellPlayerId, setSelectedSellPlayerId] = useState<string | null>(null);
   const [customBids, setCustomBids] = useState<Record<string, string>>({});
+  const [showMobileRosters, setShowMobileRosters] = useState(false);
 
   const handlePlaceBid = (playerId: string, amount: number) => {
     placeBid(playerId, amount);
@@ -87,6 +88,28 @@ export function AuctionScreen() {
     return () => clearTimeout(timeout);
   }, [auctionCurrentBid, auctionActive, auctionHighestBidderId, players, auctionCurrentCharacter]);
 
+  // Synchronize auction starting when a new character is drawn
+  useEffect(() => {
+    if (auctionCurrentCharacter) {
+      setTimer(10);
+      setAuctionActive(true);
+    } else {
+      setAuctionActive(false);
+      setTimer(10);
+    }
+  }, [auctionCurrentCharacter]);
+
+  // Synchronize timer reset when a bid is placed
+  useEffect(() => {
+    if (auctionCurrentCharacter && auctionCurrentBid > 0) {
+      setTimer(10);
+      setAuctionActive(true);
+    }
+  }, [auctionCurrentBid, auctionCurrentCharacter]);
+
+  const { roomCode } = settings;
+  const isHost = !roomCode || localPlayerId === '1' || localPlayerId === 'all';
+
   // Main Auction Timer
   useEffect(() => {
     if (!auctionActive) return;
@@ -94,8 +117,10 @@ export function AuctionScreen() {
     const interval = setInterval(() => {
       setTimer(t => {
         if (t <= 1) {
-          // Resolve auction
-          resolveAuction();
+          // Only the host resolves the auction in multiplayer, to prevent double resolution/race conditions
+          if (isHost) {
+            resolveAuction();
+          }
           setAuctionActive(false);
           return 0;
         }
@@ -104,7 +129,7 @@ export function AuctionScreen() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [auctionActive, resolveAuction]);
+  }, [auctionActive, isHost, resolveAuction]);
 
   // Manage Draft Phase
   useEffect(() => {
@@ -129,8 +154,14 @@ export function AuctionScreen() {
       }} />
 
       <header className="h-20 border-b border-white/10 flex items-center justify-between px-8 bg-black/60 backdrop-blur-md relative z-10">
-        <div className="font-display font-black text-2xl tracking-widest uppercase neon-text-pink">
-          AUCTION WARS
+        <div className="font-display font-black text-2xl tracking-widest uppercase neon-text-pink flex items-center gap-4">
+          <span>AUCTION WARS</span>
+          <button 
+            onClick={() => setShowMobileRosters(true)}
+            className="md:hidden px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-xs font-mono font-bold uppercase tracking-wider text-pink-400 hover:bg-white/20 transition-all active:scale-95"
+          >
+            Teams
+          </button>
         </div>
         <div className="text-right">
           <span className="text-xs font-mono text-gray-400 uppercase tracking-widest block">Available Pool</span>
@@ -143,7 +174,7 @@ export function AuctionScreen() {
       <div className="flex-1 flex overflow-hidden">
         
         {/* Left: Player status */}
-        <aside className="w-64 border-r border-white/10 bg-black/40 backdrop-blur-md p-4 flex flex-col gap-4 overflow-y-auto z-10 relative">
+        <aside className="w-64 border-r border-white/10 bg-black/40 backdrop-blur-md p-4 flex flex-col gap-4 overflow-y-auto z-10 relative hidden md:flex">
           <span className="text-[10px] uppercase font-black text-slate-500 tracking-[0.2em] mb-2">Participant Status</span>
           
           {players.map(p => (
@@ -210,7 +241,11 @@ export function AuctionScreen() {
               >
                 <div className="w-32 h-32 mx-auto rounded-full border-4 border-dashed border-white/20 animate-spin-slow mb-8" />
                 <h2 className="text-3xl font-display font-black uppercase mb-8 text-gray-400">Waiting for next lot...</h2>
-                <NeonButton size="xl" variant="pink" onClick={handleNextAuction}>Bring Out Next Lot</NeonButton>
+                {isHost ? (
+                  <NeonButton size="xl" variant="pink" onClick={handleNextAuction}>Bring Out Next Lot</NeonButton>
+                ) : (
+                  <p className="text-xl font-mono text-pink-500 uppercase animate-pulse">Waiting for host to bring out next lot...</p>
+                )}
               </motion.div>
             ) : auctionCurrentCharacter ? (
               <motion.div 
@@ -260,9 +295,9 @@ export function AuctionScreen() {
                   <div className="flex justify-center gap-4 flex-wrap">
                     {players.filter(p => p.type === 'Human').filter(p => localPlayerId === 'all' || p.id === localPlayerId).map(human => {
                        const isTeamFull = human.team.length >= settings.teamSize;
-                       const canBid = human.budget >= auctionCurrentBid + 5 && !isTeamFull;
+                       const canBid = human.budget >= auctionCurrentBid + 5 && !isTeamFull && timer > 0;
                        const customBidVal = parseInt(customBids[human.id] || "0") || 0;
-                       const canCustomBid = customBidVal > auctionCurrentBid && human.budget >= customBidVal && !isTeamFull;
+                       const canCustomBid = customBidVal > auctionCurrentBid && human.budget >= customBidVal && !isTeamFull && timer > 0;
                        return (
                          <div key={human.id} className="p-4 bg-black/40 rounded-xl border border-white/10 space-y-3">
                            <p className="text-xs font-bold uppercase tracking-widest text-cyan-400">{human.name}</p>
@@ -309,6 +344,58 @@ export function AuctionScreen() {
 
         </main>
       </div>
+
+      <AnimatePresence>
+        {showMobileRosters && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          >
+            <div className="glass-panel w-full max-w-md rounded-2xl border-white/20 p-6 flex flex-col max-h-[85vh]">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-display font-bold uppercase text-white tracking-wider">Team Rosters</h2>
+                <button 
+                  onClick={() => setShowMobileRosters(false)}
+                  className="text-gray-400 hover:text-white font-mono text-xs uppercase px-3 py-1 border border-white/10 rounded bg-white/5 hover:bg-white/10"
+                >
+                  Close
+                </button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto space-y-6">
+                {players.map(p => (
+                  <div key={p.id} className="p-4 rounded-xl bg-white/5 border border-white/10">
+                    <h3 className="font-display font-bold uppercase text-base text-pink-500">{p.name}</h3>
+                    <div className="flex justify-between text-xs font-mono text-gray-400 mt-1">
+                      <span>Type: {p.type}</span>
+                      <span className="text-green-400 font-bold">${p.budget}</span>
+                    </div>
+                    <div className="mt-4 space-y-2">
+                      {p.team.length === 0 && <span className="text-xs text-white/20 font-mono">No operatives drafted yet...</span>}
+                      {p.team.map((t, i) => (
+                        <div key={i} className="flex items-center gap-3 bg-black/30 p-2 rounded-lg border border-white/5">
+                          <img src={t.character.image} className="w-8 h-8 rounded-full object-cover border border-white/10" alt="" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold truncate text-white">{t.character.name}</p>
+                            <p className="text-[10px] text-gray-400 font-mono truncate">{t.character.universe}</p>
+                          </div>
+                          {t.assignedRole && (
+                            <span className="text-[10px] font-mono text-fuchsia-400 font-bold bg-fuchsia-950/40 border border-fuchsia-500/20 px-2 py-0.5 rounded">
+                              {t.assignedRole}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

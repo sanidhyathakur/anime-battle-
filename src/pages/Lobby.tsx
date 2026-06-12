@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { useGameStore } from '../store/gameStore';
@@ -7,7 +7,7 @@ import { cn } from '../components/NeonButton';
 import { GameMode, Player } from '../types/game';
 import { characters } from '../data/characters';
 import { Wifi, Copy, Lock } from 'lucide-react';
-import { decompressState, broadcastStartGame } from '../store/syncService';
+import { decompressState, broadcastStartGame, updateStoreFromNetwork } from '../store/syncService';
 
 // Generates a random 4-character string
 const generateRoomCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -23,6 +23,9 @@ export function Lobby() {
   const [p1Name, setP1Name] = useState(baseMode === 'join' ? 'Player 2 (You)' : (baseMode === 'host' ? 'Player 1 (Host)' : 'Player 1'));
   const [p2Name, setP2Name] = useState(baseMode === 'cpu' ? 'CPU Alpha' : (baseMode === 'join' ? 'Player 1 (Host)' : 'Player 2'));
   const [roomCode, setRoomCode] = useState<string>(urlCode || '');
+
+  const lastP1Name = useRef(p1Name);
+  const lastP2Name = useRef(p2Name);
 
   useEffect(() => {
     if (baseMode === 'host' && !roomCode) {
@@ -51,17 +54,23 @@ export function Lobby() {
     }).catch(err => console.error('Error broadcasting name:', err));
   };
 
-  const handleP1NameChange = (val: string) => {
-    setP1Name(val);
-    if (roomCode && baseMode === 'host') {
-      broadcastNameUpdate('1', val);
+  const handleP1NameBlur = () => {
+    if (roomCode && baseMode === 'host' && p1Name !== lastP1Name.current) {
+      broadcastNameUpdate('1', p1Name);
+      lastP1Name.current = p1Name;
     }
   };
 
-  const handleP2NameChange = (val: string) => {
-    setP2Name(val);
-    if (roomCode && baseMode === 'join') {
-      broadcastNameUpdate('2', val);
+  const handleP2NameBlur = () => {
+    if (roomCode && baseMode === 'join' && p2Name !== lastP2Name.current) {
+      broadcastNameUpdate('2', p2Name);
+      lastP2Name.current = p2Name;
+    }
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.currentTarget.blur();
     }
   };
 
@@ -71,7 +80,7 @@ export function Lobby() {
 
     const localPlayerId = sessionStorage.getItem('localPlayerId') || '1';
 
-    const es = new EventSource(`https://ntfy.sh/adb-room-${roomCode}/sse`);
+    const es = new EventSource(`https://ntfy.sh/adb-room-${roomCode}/sse?since=latest`);
     
     es.onmessage = (event) => {
       try {
@@ -86,7 +95,7 @@ export function Lobby() {
             if (payload.playerId === '2') setP2Name(payload.name);
           } else if (payload.type === 'START_GAME' || payload.type === 'SYNC_STATE') {
             const state = decompressState(payload.state);
-            useGameStore.setState(state);
+            updateStoreFromNetwork(state);
           }
         }
       } catch (e) {
@@ -101,12 +110,17 @@ export function Lobby() {
 
   // Navigate when game starts
   useEffect(() => {
-    const unsub = useGameStore.subscribe((state) => {
+    const checkState = (state: any) => {
       if (baseMode === 'join' && (state.draftPhase === 'Drafting' || state.draftPhase === 'Auction')) {
         if (state.settings.mode === 'Auction') navigate('/auction');
         else navigate('/draft');
       }
-    });
+    };
+
+    // Check immediately on mount in case store has already updated
+    checkState(useGameStore.getState());
+
+    const unsub = useGameStore.subscribe(checkState);
     return () => unsub();
   }, [baseMode, navigate]);
   
@@ -150,7 +164,10 @@ export function Lobby() {
     });
 
     if (roomCode && (baseMode === 'host' || baseMode === 'join')) {
-      broadcastStartGame(roomCode, useGameStore.getState());
+      // Small 150ms timeout prevents network rate limit conflicts if name blur broadcast happens simultaneously
+      setTimeout(() => {
+        broadcastStartGame(roomCode, useGameStore.getState());
+      }, 150);
     }
 
     if (gameMode === 'Auction') navigate('/auction');
@@ -205,7 +222,9 @@ export function Lobby() {
               <input 
                 type="text" 
                 value={p1Name}
-                onChange={e => handleP1NameChange(e.target.value)}
+                onChange={e => setP1Name(e.target.value)}
+                onBlur={handleP1NameBlur}
+                onKeyDown={handleInputKeyDown}
                 disabled={baseMode === 'join'}
                 className="w-full bg-transparent border-b border-white/20 focus:border-cyan-400 text-2xl font-bold font-display text-white outline-none py-2 transition-colors disabled:opacity-50"
               />
@@ -219,7 +238,9 @@ export function Lobby() {
               <input 
                 type="text" 
                 value={p2Name}
-                onChange={e => handleP2NameChange(e.target.value)}
+                onChange={e => setP2Name(e.target.value)}
+                onBlur={handleP2NameBlur}
+                onKeyDown={handleInputKeyDown}
                 disabled={baseMode === 'host' || baseMode === 'cpu'}
                 className="w-full bg-transparent border-b border-white/20 focus:border-fuchsia-400 text-2xl font-bold font-display text-white outline-none py-2 transition-colors disabled:opacity-50"
               />
