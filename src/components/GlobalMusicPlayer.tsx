@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router';
 import { useGameStore } from '../store/gameStore';
 import { motion, AnimatePresence } from 'motion/react';
 import { Music, Volume2, VolumeX, Disc, ChevronUp, ChevronDown } from 'lucide-react';
@@ -6,6 +7,8 @@ import { Music, Volume2, VolumeX, Disc, ChevronUp, ChevronDown } from 'lucide-re
 export function GlobalMusicPlayer() {
   const { musicPlaying, setMusicPlaying } = useGameStore();
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const currentPath = location.pathname.toLowerCase();
 
   const toggleMute = () => {
     setMusicPlaying(!musicPlaying);
@@ -15,15 +18,33 @@ export function GlobalMusicPlayer() {
     setIsOpen(!isOpen);
   };
 
+  // Determine current track based on route
+  let trackUrl = 'https://soundcloud.com/imperss/slidein';
+  let trackTitle = 'SLIDEIN';
+  let trackArtist = 'IMPERSS';
+
+  if (currentPath === '/draft') {
+    trackUrl = 'https://soundcloud.com/vgl9/capturing-the-moment';
+    trackTitle = 'CAPTURING THE MOMENT';
+    trackArtist = 'VGL9';
+  } else if (currentPath === '/auction') {
+    trackUrl = 'https://soundcloud.com/tubebackr/balearic-love';
+    trackTitle = 'BALEARIC LOVE';
+    trackArtist = 'TUBEBACKR';
+  }
+
+  const encodedUrl = encodeURIComponent(trackUrl);
+
   return (
     <>
       {/* Hidden iframe for autoplay background music */}
       {musicPlaying && (
         <iframe
+          key={trackUrl} // Use key to force reload the iframe when track URL changes
           id="sc-bg-iframe"
           width="0"
           height="0"
-          src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/oxinym/euphoria&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false&color=00f0ff"
+          src={`https://w.soundcloud.com/player/?url=${encodedUrl}&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false&color=00f0ff`}
           scrolling="no"
           frameborder="no"
           allow="autoplay"
@@ -58,12 +79,13 @@ export function GlobalMusicPlayer() {
               <div className="w-full bg-black/60 rounded-xl overflow-hidden border border-white/5 h-[120px] relative">
                 {musicPlaying ? (
                   <iframe
+                    key={trackUrl} // Force reload widget when track changes
                     width="100%"
                     height="120"
                     scrolling="no"
                     frameborder="no"
                     allow="autoplay"
-                    src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/oxinym/euphoria&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false&color=00f0ff"
+                    src={`https://w.soundcloud.com/player/?url=${encodedUrl}&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false&color=00f0ff`}
                   />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
@@ -80,8 +102,8 @@ export function GlobalMusicPlayer() {
               </div>
 
               <div className="flex items-center justify-between text-[10px] font-mono text-gray-400">
-                <span>TRACK: EUPHORIA</span>
-                <span>ARTIST: OXINYM</span>
+                <span className="truncate pr-2">TRACK: {trackTitle}</span>
+                <span className="shrink-0">ARTIST: {trackArtist}</span>
               </div>
             </motion.div>
           )}
