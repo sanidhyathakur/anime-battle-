@@ -5,7 +5,7 @@ export const ALL_ROLES: Role[] = [
   'Mage', 'Support', 'Berserker', 'Strategist', 'Speedster', 
   'Sniper', 'Leader', 'Guardian', 'Fighter',
   'Destroyer', 'Angel', 'Inventor', 'Scout', 'Conqueror', 
-  'Monster', 'Carry', 'Bruiser', 'Warrior', 'Fusion'
+  'Monster', 'Carry', 'Bruiser', 'Warrior', 'Fusion', 'Genius'
 ];
 
 export type Role = 
@@ -32,7 +32,8 @@ export type Role =
   | 'Carry'
   | 'Bruiser'
   | 'Warrior'
-  | 'Fusion';
+  | 'Fusion'
+  | 'Genius';
 
 export interface Character {
   id: string;
