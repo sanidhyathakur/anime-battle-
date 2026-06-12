@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Anime Draft Battle",
+  "description": "A high-speed, neon-dark anime draft battle simulator with hotseat multiplayer and CPU battles. Draft your team, assign roles, and calculate your ultimate power rating.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
