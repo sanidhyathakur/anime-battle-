@@ -28,7 +28,9 @@ export function Landing() {
     <div className="w-full min-h-screen bg-[#050508] text-slate-100 font-sans flex flex-col p-4 md:p-6 overflow-x-hidden border-x-[4px] border-b-[4px] border-t-0 border-[#12121a]">
       <div className="scanline" />
       
-      <nav className="flex justify-between items-center mb-6 border-b border-cyan-500/20 pb-4 max-w-7xl mx-auto w-full relative z-10">
+      {!showSplash && (
+        <>
+          <nav className="flex justify-between items-center mb-6 border-b border-cyan-500/20 pb-4 max-w-7xl mx-auto w-full relative z-10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-violet-600 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.5)]">
             <span className="font-black text-xl italic text-white">A</span>
@@ -270,6 +272,8 @@ export function Landing() {
             </div>
           </motion.div>
         </div>
+      )}
+        </>
       )}
 
       {/* Splash Screen Autoplay Bypass Overlay */}
