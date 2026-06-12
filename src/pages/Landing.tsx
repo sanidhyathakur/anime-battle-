@@ -1,13 +1,25 @@
 import { useNavigate } from 'react-router';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { characters } from '../data/characters';
 import { Users, Zap, Crown, UserPlus } from 'lucide-react';
 import { useState } from 'react';
+import { useGameStore } from '../store/gameStore';
 
 export function Landing() {
   const navigate = useNavigate();
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinCode, setJoinCode] = useState('');
+
+  const setMusicPlaying = useGameStore(s => s.setMusicPlaying);
+  const [showSplash, setShowSplash] = useState(() => {
+    return !sessionStorage.getItem('adb_session_started');
+  });
+
+  const handleStartGame = () => {
+    sessionStorage.setItem('adb_session_started', 'true');
+    setShowSplash(false);
+    setMusicPlaying(true);
+  };
 
   const featuredChar = characters[0];
   const totalCharacters = characters.length;
@@ -259,6 +271,64 @@ export function Landing() {
           </motion.div>
         </div>
       )}
+
+      {/* Splash Screen Autoplay Bypass Overlay */}
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, filter: 'blur(20px)' }}
+            transition={{ duration: 0.8, ease: 'easeInOut' }}
+            className="fixed inset-0 bg-[#040407] z-50 flex flex-col items-center justify-center p-4 relative overflow-hidden"
+          >
+            {/* Scanlines and cyber glow bg */}
+            <div className="scanline" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 blur-[150px] rounded-full pointer-events-none" />
+            <div className="absolute top-1/3 left-1/3 w-[300px] h-[300px] bg-violet-600/10 blur-[100px] rounded-full pointer-events-none" />
+            
+            {/* Tech grid border accents */}
+            <div className="absolute inset-10 border border-white/5 pointer-events-none" />
+            <div className="absolute inset-12 border border-dashed border-white/5 pointer-events-none" />
+            
+            <motion.div 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="text-center z-10 max-w-lg space-y-8 px-6"
+            >
+              {/* Logo / Title */}
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-[10px] font-mono tracking-widest text-cyan-400 uppercase">
+                  System Initialization :: Ready
+                </div>
+                <h1 className="text-5xl md:text-6xl font-black uppercase tracking-tighter italic text-white leading-none">
+                  ANIME DRAFT<br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-500 drop-shadow-[0_0_20px_rgba(6,182,212,0.3)]">BATTLE</span>
+                </h1>
+                <p className="text-xs font-mono text-gray-500 uppercase tracking-wider">
+                  Tactical card drafting & synergy simulation
+                </p>
+              </div>
+
+              {/* Enter Button */}
+              <motion.button
+                onClick={handleStartGame}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full max-w-sm py-4 bg-gradient-to-r from-cyan-600 to-violet-600 hover:from-cyan-500 hover:to-violet-500 text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all duration-300 relative group cursor-pointer"
+              >
+                <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
+                INITIATE INTERACTION
+              </motion.button>
+
+              <div className="text-[9px] font-mono text-gray-600 uppercase tracking-widest flex items-center justify-center gap-2">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping" />
+                Audio connection ready to establish
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -20,6 +20,10 @@ interface GameState {
   auctionCurrentBid: number;
   auctionHighestBidderId: string | null;
 
+  // Music State
+  musicPlaying: boolean;
+  setMusicPlaying: (playing: boolean) => void;
+
   // Actions
   setSettings: (settings: GameSettings) => void;
   initializeGame: (players: Omit<Player, 'team' | 'passesRemaining'>[], customSettings?: GameSettings) => void;
@@ -67,6 +71,8 @@ export const useGameStore = create<GameState>()(
       auctionCurrentCharacter: null,
       auctionCurrentBid: 0,
       auctionHighestBidderId: null,
+      musicPlaying: false,
+      setMusicPlaying: (playing) => set({ musicPlaying: playing }),
 
       setSettings: (settings) => set({ settings }),
 
