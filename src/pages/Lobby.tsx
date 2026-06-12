@@ -7,7 +7,7 @@ import { cn } from '../components/NeonButton';
 import { GameMode, Player } from '../types/game';
 import { characters } from '../data/characters';
 import { Wifi, Copy, Lock } from 'lucide-react';
-import { startRoomSync, stopRoomSync, broadcastStartGame } from '../store/syncService';
+import { decompressState, broadcastStartGame } from '../store/syncService';
 
 // Generates a random 4-character string
 const generateRoomCode = () => Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -35,22 +35,80 @@ export function Lobby() {
     sessionStorage.setItem('localPlayerId', localId);
   }, [baseMode]);
 
+  const broadcastNameUpdate = (playerId: string, name: string) => {
+    const localPlayerId = sessionStorage.getItem('localPlayerId') || '1';
+    fetch(`https://ntfy.sh/adb-room-${roomCode}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'text/plain'
+      },
+      body: JSON.stringify({
+        type: 'UPDATE_NAME',
+        playerId,
+        name,
+        senderId: localPlayerId
+      })
+    }).catch(err => console.error('Error broadcasting name:', err));
+  };
+
+  const handleP1NameChange = (val: string) => {
+    setP1Name(val);
+    if (roomCode && baseMode === 'host') {
+      broadcastNameUpdate('1', val);
+    }
+  };
+
+  const handleP2NameChange = (val: string) => {
+    setP2Name(val);
+    if (roomCode && baseMode === 'join') {
+      broadcastNameUpdate('2', val);
+    }
+  };
+
   // Sync effect using ntfy for online syncing
   useEffect(() => {
     if (!roomCode || (baseMode !== 'host' && baseMode !== 'join')) return;
 
-    startRoomSync(roomCode, (state) => {
-      if (baseMode === 'join') {
-        const mode = state.settings.mode;
-        if (mode === 'Auction') navigate('/auction');
+    const localPlayerId = sessionStorage.getItem('localPlayerId') || '1';
+
+    const es = new EventSource(`https://ntfy.sh/adb-room-${roomCode}/json`);
+    
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.event === 'message') {
+          const payload = JSON.parse(data.message);
+          
+          if (payload.senderId === localPlayerId) return;
+
+          if (payload.type === 'UPDATE_NAME') {
+            if (payload.playerId === '1') setP1Name(payload.name);
+            if (payload.playerId === '2') setP2Name(payload.name);
+          } else if (payload.type === 'START_GAME' || payload.type === 'SYNC_STATE') {
+            const state = decompressState(payload.state);
+            useGameStore.setState(state);
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing lobby sync event:', e);
+      }
+    };
+
+    return () => {
+      es.close();
+    };
+  }, [roomCode, baseMode]);
+
+  // Navigate when game starts
+  useEffect(() => {
+    const unsub = useGameStore.subscribe((state) => {
+      if (baseMode === 'join' && (state.draftPhase === 'Drafting' || state.draftPhase === 'Auction')) {
+        if (state.settings.mode === 'Auction') navigate('/auction');
         else navigate('/draft');
       }
     });
-
-    return () => {
-      stopRoomSync();
-    };
-  }, [roomCode, baseMode, navigate]);
+    return () => unsub();
+  }, [baseMode, navigate]);
   
   const [gameMode, setGameMode] = useState<GameMode>('Draft');
   
@@ -141,11 +199,11 @@ export function Lobby() {
           <div className="space-y-4">
             <div className="bg-black/50 p-4 lg:p-6 rounded-xl border border-white/10 relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500 shadow-[0_0_10px_#00f0ff]" />
-              <label className="block text-xs font-mono text-cyan-500 mb-2">SLOT 01 :: {baseMode === 'join' ? 'PLAYER 2' : 'PLAYER 1'}</label>
+              <label className="block text-xs font-mono text-cyan-500 mb-2">SLOT 01 :: {baseMode === 'join' ? 'PLAYER 1 (HOST)' : 'PLAYER 1 (YOU)'}</label>
               <input 
                 type="text" 
                 value={p1Name}
-                onChange={e => setP1Name(e.target.value)}
+                onChange={e => handleP1NameChange(e.target.value)}
                 disabled={baseMode === 'join'}
                 className="w-full bg-transparent border-b border-white/20 focus:border-cyan-400 text-2xl font-bold font-display text-white outline-none py-2 transition-colors disabled:opacity-50"
               />
@@ -154,13 +212,13 @@ export function Lobby() {
             <div className="bg-black/50 p-4 lg:p-6 rounded-xl border border-white/10 relative overflow-hidden">
                <div className="absolute left-0 top-0 bottom-0 w-1 bg-fuchsia-500 shadow-[0_0_10px_#ae00ff]" />
               <label className="block text-xs font-mono text-fuchsia-500 mb-2">
-                SLOT 02 :: {baseMode === 'cpu' ? 'CPU' : (baseMode === 'join' ? 'HOST' : 'HUMAN')}
+                SLOT 02 :: {baseMode === 'cpu' ? 'CPU' : (baseMode === 'join' ? 'PLAYER 2 (YOU)' : 'PLAYER 2 (GUEST)')}
               </label>
               <input 
                 type="text" 
                 value={p2Name}
-                onChange={e => setP2Name(e.target.value)}
-                disabled={baseMode === 'join'}
+                onChange={e => handleP2NameChange(e.target.value)}
+                disabled={baseMode === 'host' || baseMode === 'cpu'}
                 className="w-full bg-transparent border-b border-white/20 focus:border-fuchsia-400 text-2xl font-bold font-display text-white outline-none py-2 transition-colors disabled:opacity-50"
               />
             </div>
