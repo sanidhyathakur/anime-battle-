@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { useGameStore } from '../store/gameStore';
@@ -19,9 +19,14 @@ export function Lobby() {
   const urlCode = searchParams.get('code');
   
   const initGame = useGameStore(s => s.initializeGame);
+  const resetGame = useGameStore(s => s.resetGame);
+
+  useEffect(() => {
+    resetGame();
+  }, [resetGame]);
   
-  const [p1Name, setP1Name] = useState(baseMode === 'join' ? 'Player 2 (You)' : (baseMode === 'host' ? 'Player 1 (Host)' : 'Player 1'));
-  const [p2Name, setP2Name] = useState(baseMode === 'cpu' ? 'CPU Alpha' : (baseMode === 'join' ? 'Player 1 (Host)' : 'Player 2'));
+  const [p1Name, setP1Name] = useState(baseMode === 'join' ? 'Player 1 (Host)' : (baseMode === 'host' ? 'Player 1 (Host)' : 'Player 1'));
+  const [p2Name, setP2Name] = useState(baseMode === 'cpu' ? 'CPU Alpha' : (baseMode === 'join' ? 'Player 2 (You)' : 'Player 2'));
   const [roomCode, setRoomCode] = useState<string>(urlCode || '');
 
   const lastP1Name = useRef(p1Name);
