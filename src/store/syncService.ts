@@ -158,7 +158,7 @@ export const startRoomSync = (roomCode: string, onStartGame?: (state: any) => vo
   console.log(`Starting sync for room ${roomCode}. Local Player ID: ${localPlayerId}`);
 
   // 1. Subscribe to ntfy server-sent events for incoming actions
-  const es = new EventSource(`https://ntfy.sh/adb-room-${roomCode}/json`);
+  const es = new EventSource(`https://ntfy.sh/adb-room-${roomCode}/sse`);
   activeEventSource = es;
 
   es.onmessage = (event) => {

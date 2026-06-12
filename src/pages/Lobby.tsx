@@ -71,7 +71,7 @@ export function Lobby() {
 
     const localPlayerId = sessionStorage.getItem('localPlayerId') || '1';
 
-    const es = new EventSource(`https://ntfy.sh/adb-room-${roomCode}/json`);
+    const es = new EventSource(`https://ntfy.sh/adb-room-${roomCode}/sse`);
     
     es.onmessage = (event) => {
       try {
