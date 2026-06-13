@@ -237,7 +237,7 @@ export function Lobby() {
         if (isDbAlreadySelected) {
           return prev.filter(x => !x.startsWith('Dragon Ball'));
         } else {
-          return [...prev.filter(x => x !== 'Naruto' && !x.startsWith('Dragon Ball')), ...dbUniverses];
+          return [...prev.filter(x => !x.startsWith('Dragon Ball')), ...dbUniverses];
         }
       });
     } else if (u === 'Naruto') {
@@ -245,7 +245,7 @@ export function Lobby() {
         if (prev.includes('Naruto')) {
           return prev.filter(x => x !== 'Naruto');
         } else {
-          return [...prev.filter(x => !x.startsWith('Dragon Ball')), 'Naruto'];
+          return [...prev, 'Naruto'];
         }
       });
     } else {
