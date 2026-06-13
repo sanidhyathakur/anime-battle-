@@ -448,7 +448,7 @@ export function Lobby() {
             <div className="grid grid-cols-2 gap-2">
               {allUniverses.map(u => {
                 const isSelected = selectedUniverses.includes(u);
-                const isLocked = !u.startsWith('Dragon Ball');
+                const isLocked = !u.startsWith('Dragon Ball') && u !== 'Naruto';
                 return (
                   <div 
                     key={u}
