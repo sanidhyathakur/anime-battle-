@@ -270,7 +270,7 @@ export const characters: Character[] = [
     "basePrice": 50,
     "rarity": "Mythic",
     "roles": ["Mage", "Support"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Leader"],
     "passive": "Six Paths Chakra massively boosts all stats.",
     "tags": ["Otsutsuki", "Sage"]
   },
@@ -283,7 +283,7 @@ export const characters: Character[] = [
     "basePrice": 49,
     "rarity": "Mythic",
     "roles": ["Mage", "Tank"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Destroyer"],
     "passive": "Dimension Shift periodically alters the battlefield.",
     "tags": ["Otsutsuki", "God"]
   },
@@ -296,7 +296,7 @@ export const characters: Character[] = [
     "basePrice": 48,
     "rarity": "Mythic",
     "roles": ["Fighter", "Assassin"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Captain"],
     "passive": "Baryon Energy drains enemy lifespan.",
     "tags": ["Jinchuriki", "Hokage"]
   },
@@ -309,7 +309,7 @@ export const characters: Character[] = [
     "basePrice": 47,
     "rarity": "Mythic",
     "roles": ["Assassin", "Mage"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Vice Captain"],
     "passive": "Amenotejikara enables instant repositioning.",
     "tags": ["Uchiha", "Rinnegan"]
   },
@@ -322,7 +322,7 @@ export const characters: Character[] = [
     "basePrice": 45,
     "rarity": "Mythic",
     "roles": ["Tank", "Mage"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Conqueror"],
     "passive": "Truth Seeking Orbs negate enemy abilities.",
     "tags": ["Uchiha", "Jinchuriki"]
   },
@@ -335,7 +335,7 @@ export const characters: Character[] = [
     "basePrice": 43,
     "rarity": "Legendary",
     "roles": ["Fighter", "Assassin"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Berserker"],
     "passive": "Night Guy massively increases burst damage.",
     "tags": ["Taijutsu", "Konoha"]
   },
@@ -348,7 +348,7 @@ export const characters: Character[] = [
     "basePrice": 42,
     "rarity": "Legendary",
     "roles": ["Assassin", "Mage"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Leader"],
     "passive": "Kamui attacks ignore most defenses.",
     "tags": ["Sharingan", "Hatake"]
   },
@@ -361,7 +361,7 @@ export const characters: Character[] = [
     "basePrice": 41,
     "rarity": "Legendary",
     "roles": ["Tank", "Support"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Guardian"],
     "passive": "Six Paths power grants immense durability.",
     "tags": ["Uchiha", "Jinchuriki"]
   },
@@ -387,7 +387,7 @@ export const characters: Character[] = [
     "basePrice": 35,
     "rarity": "Epic",
     "roles": ["Mage", "Support"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Leader"],
     "passive": "Shinra Tensei periodically knocks back enemies.",
     "tags": ["Akatsuki", "Rinnegan"]
   },
@@ -413,7 +413,7 @@ export const characters: Character[] = [
     "basePrice": 33,
     "rarity": "Epic",
     "roles": ["Mage", "Assassin"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Strategist"],
     "passive": "Tsukuyomi briefly disables enemies.",
     "tags": ["Uchiha", "Akatsuki"]
   },
@@ -439,7 +439,7 @@ export const characters: Character[] = [
     "basePrice": 30,
     "rarity": "Epic",
     "roles": ["Fighter", "Tank"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Fighter"],
     "passive": "Eight Tails chakra increases survivability.",
     "tags": ["Jinchuriki", "Cloud"]
   },
@@ -452,7 +452,7 @@ export const characters: Character[] = [
     "basePrice": 28,
     "rarity": "Rare",
     "roles": ["Mage", "Support"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Strategist"],
     "passive": "Sage Mode enhances all abilities.",
     "tags": ["Sannin", "Sage"]
   },
@@ -504,7 +504,7 @@ export const characters: Character[] = [
     "basePrice": 24,
     "rarity": "Rare",
     "roles": ["Fighter", "Assassin"],
-    "preferredRoles": ["Carry"],
+    "preferredRoles": ["Fighter"],
     "passive": "Gate Release boosts attack speed and movement.",
     "tags": ["Taijutsu", "Konoha"]
   },
