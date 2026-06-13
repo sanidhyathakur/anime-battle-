@@ -43,23 +43,32 @@ const compressTeam = (team: { character: Character; assignedRole?: Role }[]): Co
   });
 };
 
-const decompressTeam = (team: CompressedTeamItem[]): { character: Character; assignedRole?: Role }[] => {
+const decompressTeam = (team: CompressedTeamItem[], isUnequal?: boolean): { character: Character; assignedRole?: Role }[] => {
   return team.map(item => {
     let char: Character;
     if (item.characterId.startsWith('grunt-') && item.gruntCharacter) {
       char = item.gruntCharacter;
     } else {
-      char = characters.find(c => c.id === item.characterId) || {
-        id: item.characterId,
-        name: "Nameless Grunt",
-        universe: "Unknown",
-        image: "https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=400&h=400&auto=format&fit=crop",
-        powerLevel: 1000,
-        basePrice: 0,
-        rarity: "Common",
-        roles: ["Support"],
-        preferredRoles: []
-      };
+      const orig = characters.find(c => c.id === item.characterId);
+      if (orig) {
+        if (isUnequal && orig.universe === 'Naruto') {
+          char = { ...orig, powerLevel: Math.floor(orig.powerLevel / 1.7) };
+        } else {
+          char = orig;
+        }
+      } else {
+        char = {
+          id: item.characterId,
+          name: "Nameless Grunt",
+          universe: "Unknown",
+          image: "https://images.unsplash.com/photo-1542204165-65bf26472b9b?q=80&w=400&h=400&auto=format&fit=crop",
+          powerLevel: 1000,
+          basePrice: 0,
+          rarity: "Common",
+          roles: ["Support"],
+          preferredRoles: []
+        };
+      }
     }
     return {
       character: char,
@@ -93,12 +102,14 @@ export const compressState = (state: any, senderId: string): CompressedState => 
 };
 
 export const decompressState = (compressed: CompressedState): any => {
+  const isUnequal = compressed.settings?.matchupType === 'Unequal';
+
   const players = compressed.players.map(p => ({
     id: p.id,
     name: p.name,
     type: p.type,
     budget: p.budget,
-    team: decompressTeam(p.team),
+    team: decompressTeam(p.team, isUnequal),
     passesRemaining: p.passesRemaining
   }));
 
@@ -110,7 +121,11 @@ export const decompressState = (compressed: CompressedState): any => {
         if (teamItem && teamItem.gruntCharacter) return teamItem.gruntCharacter;
       }
     }
-    return characters.find(c => c.id === id) || null;
+    const orig = characters.find(c => c.id === id);
+    if (orig && isUnequal && orig.universe === 'Naruto') {
+      return { ...orig, powerLevel: Math.floor(orig.powerLevel / 1.7) };
+    }
+    return orig || null;
   };
 
   const availableCharacters = compressed.availableCharacterIds.map(id => {

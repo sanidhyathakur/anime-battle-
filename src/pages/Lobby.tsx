@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { useGameStore } from '../store/gameStore';
 import { NeonButton } from '../components/NeonButton';
 import { cn } from '../components/NeonButton';
-import { GameMode, Player } from '../types/game';
+import { GameMode, Player, MatchupType } from '../types/game';
 import { characters } from '../data/characters';
 import { Wifi, Copy, Lock } from 'lucide-react';
 import { decompressState, broadcastStartGame, updateStoreFromNetwork } from '../store/syncService';
@@ -219,6 +219,7 @@ export function Lobby() {
   }, [baseMode, navigate]);
   
   const [gameMode, setGameMode] = useState<GameMode>('Draft');
+  const [matchupType, setMatchupType] = useState<MatchupType>('Equal');
   
   // Get unique universes
   const allUniverses = Array.from(new Set(characters.map(c => c.universe)));
@@ -270,7 +271,8 @@ export function Lobby() {
       universeRestrictions: selectedUniverses.length === allUniverses.length ? [] : selectedUniverses,
       maxPasses: maxPasses,
       roomCode: roomCode,
-      teamSize: teamSize
+      teamSize: teamSize,
+      matchupType: matchupType
     });
 
     if (roomCode && (baseMode === 'host' || baseMode === 'join')) {
@@ -414,6 +416,32 @@ export function Lobby() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Matchup Category */}
+          <div className={cn("transition-opacity", baseMode === 'join' ? "opacity-50 pointer-events-none" : "opacity-100")}>
+            <label className="block text-xs font-mono text-gray-400 uppercase tracking-widest mb-3">Matchup Category</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+              {(['Equal', 'Unequal'] as MatchupType[]).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setMatchupType(t)}
+                  className={cn(
+                    "py-2 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all border text-center cursor-pointer",
+                    matchupType === t 
+                      ? "bg-cyan-500/20 border-cyan-400 text-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.3)]" 
+                      : "bg-black/50 border-white/10 text-gray-400 hover:border-white/30"
+                  )}
+                >
+                  {t} Matchup
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-400 font-mono leading-relaxed bg-white/5 border border-white/10 rounded-lg p-2.5">
+              {matchupType === 'Equal' 
+                ? "Characters having their value of power level in their universe will be matched making the match fair."
+                : "Characters will be ranked on same universe. Naruto characters are scaled down by 1.7x compared to Dragon Ball."}
+            </p>
           </div>
 
           {/* Mode Specific Settings */}

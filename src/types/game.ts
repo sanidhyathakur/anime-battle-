@@ -67,6 +67,8 @@ export interface DraftedCharacter {
 
 export type GameMode = 'Draft' | 'Auction';
 
+export type MatchupType = 'Equal' | 'Unequal';
+
 export interface GameSettings {
   mode: GameMode;
   budget: number;
@@ -76,4 +78,5 @@ export interface GameSettings {
   maxPasses: number;
   roomCode?: string;
   teamSize: number;
+  matchupType: MatchupType;
 }

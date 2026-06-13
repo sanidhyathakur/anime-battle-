@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Character, GameSettings, Player, DraftedCharacter, Role } from '../types/game';
+import { Character, GameSettings, Player, DraftedCharacter, Role, MatchupType } from '../types/game';
 import { characters } from '../data/characters';
 
 interface GameState {
@@ -54,6 +54,7 @@ const initialSettings: GameSettings = {
   maxPasses: 3,
   roomCode: undefined,
   teamSize: 5,
+  matchupType: 'Equal',
 };
 
 export const useGameStore = create<GameState>()(
@@ -84,6 +85,15 @@ export const useGameStore = create<GameState>()(
           pool = pool.filter(c => activeSettings.universeRestrictions.includes(c.universe));
         } else {
           pool = pool.filter(c => c.universe.startsWith('Dragon Ball'));
+        }
+
+        if (activeSettings.matchupType === 'Unequal') {
+          pool = pool.map(c => {
+            if (c.universe === 'Naruto') {
+              return { ...c, powerLevel: Math.floor(c.powerLevel / 1.7) };
+            }
+            return c;
+          });
         }
 
         set({
