@@ -8,6 +8,7 @@ import { BattleResult } from './pages/BattleResult';
 import { AuctionScreen } from './pages/AuctionScreen';
 import { GlobalMusicPlayer } from './components/GlobalMusicPlayer';
 import { useGameStore } from './store/gameStore';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function App() {
   useEffect(() => {
@@ -16,17 +17,20 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/lobby" element={<Lobby />} />
-        <Route path="/draft" element={<DraftScreen />} />
-        <Route path="/auction" element={<AuctionScreen />} />
-        <Route path="/teambuilder" element={<TeamBuilder />} />
-        <Route path="/battle" element={<BattleResult />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      <GlobalMusicPlayer />
-    </BrowserRouter>
+    <>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/lobby" element={<Lobby />} />
+          <Route path="/draft" element={<DraftScreen />} />
+          <Route path="/auction" element={<AuctionScreen />} />
+          <Route path="/teambuilder" element={<TeamBuilder />} />
+          <Route path="/battle" element={<BattleResult />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+        <GlobalMusicPlayer />
+      </BrowserRouter>
+      <Analytics />
+    </>
   );
 }
