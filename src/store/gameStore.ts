@@ -83,8 +83,6 @@ export const useGameStore = create<GameState>()(
         let pool = [...characters];
         if (activeSettings.universeRestrictions.length > 0) {
           pool = pool.filter(c => activeSettings.universeRestrictions.includes(c.universe));
-        } else {
-          pool = pool.filter(c => c.universe.startsWith('Dragon Ball'));
         }
 
         if (activeSettings.matchupType === 'Unequal') {
