@@ -222,20 +222,36 @@ export function Lobby() {
   
   // Get unique universes
   const allUniverses = Array.from(new Set(characters.map(c => c.universe)));
-  const [selectedUniverses, setSelectedUniverses] = useState<string[]>(
-    allUniverses.filter(u => u.startsWith('Dragon Ball'))
-  );
+  const [selectedUniverses, setSelectedUniverses] = useState<string[]>([]);
 
   const [maxPasses, setMaxPasses] = useState(2);
   const [auctionBudget, setAuctionBudget] = useState(150);
   const [teamSize, setTeamSize] = useState(5);
 
   const toggleUniverse = (u: string) => {
-    // Only 'Dragon Ball' sub-universes are unlocked and always selected
-    if (u.startsWith('Dragon Ball')) return;
-    setSelectedUniverses(prev => 
-      prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]
-    );
+    if (u.startsWith('Dragon Ball')) {
+      setSelectedUniverses(prev => {
+        const dbUniverses = allUniverses.filter(univ => univ.startsWith('Dragon Ball'));
+        const isDbAlreadySelected = dbUniverses.every(univ => prev.includes(univ));
+        if (isDbAlreadySelected) {
+          return prev.filter(x => !x.startsWith('Dragon Ball'));
+        } else {
+          return [...prev.filter(x => x !== 'Naruto' && !x.startsWith('Dragon Ball')), ...dbUniverses];
+        }
+      });
+    } else if (u === 'Naruto') {
+      setSelectedUniverses(prev => {
+        if (prev.includes('Naruto')) {
+          return prev.filter(x => x !== 'Naruto');
+        } else {
+          return [...prev.filter(x => !x.startsWith('Dragon Ball')), 'Naruto'];
+        }
+      });
+    } else {
+      setSelectedUniverses(prev => 
+        prev.includes(u) ? prev.filter(x => x !== u) : [...prev, u]
+      );
+    }
   };
 
   const handleStart = () => {
